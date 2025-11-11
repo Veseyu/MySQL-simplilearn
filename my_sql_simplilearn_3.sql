@@ -1,15 +1,41 @@
-show databases;
+-- =========================================
+-- MySQL Course Notes
+-- Source: Simplilearn
+-- =========================================
 
-use sql_intro;
+-- =========================
+-- LESSON 3: Advanced Employee and Sales Data
+-- =========================
 
-show tables;
+-- Switch to practice database
+SHOW DATABASES;
+USE sql_intro;
+SHOW TABLES;
 
-create table employees (Emp_Id int primary key, Emp_name varchar(25),
-Age int, Gender char(1), Doj date, Dept varchar(20), City varchar(15), Salary float);
+-- =========================
+-- Creating Employees Table
+-- =========================
 
-describe employees;
+-- Drop table if it exists (safety)
+DROP TABLE IF EXISTS employees;
 
-insert into employees values
+-- Create employees table with ID and department
+CREATE TABLE employees (
+    Emp_Id INT PRIMARY KEY,     -- Employee ID
+    Emp_name VARCHAR(25),       -- Employee name
+    Age INT,                    -- Age
+    Gender CHAR(1),             -- M/F
+    Doj DATE,                   -- Date of joining
+    Dept VARCHAR(20),           -- Department
+    City VARCHAR(15),           -- City
+    Salary FLOAT                -- Salary
+);
+
+-- Verify table structure
+DESCRIBE employees;
+
+-- Insert sample data
+INSERT INTO employees VALUES
 (101, "William", 36, "M", "2016-04-20", "IT", "Chicago", 83000),
 (102, "Olivia", 29, "F", "2018-09-12", "HR", "New York", 65000),
 (103, "James", 42, "M", "2010-06-05", "Finance", "Seattle", 95000),
@@ -26,38 +52,60 @@ insert into employees values
 (114, "Charlotte", 32, "F", "2015-06-27", "HR", "Austin", 69000),
 (115, "Ethan", 39, "M", "2008-11-02", "Finance", "Chicago", 97000);
 
-select * from employees;
+-- Display all employees
+SELECT * FROM employees;
 
-select distinct city from employees;
+-- =========================
+-- Basic Queries and Aggregation
+-- =========================
 
-select distinct dept from employees;
+-- Distinct cities
+SELECT DISTINCT City FROM employees;
 
-select avg(age) from employees;
+-- Distinct departments
+SELECT DISTINCT Dept FROM employees;
 
-#avg age in each dept
+-- Average age of all employees
+SELECT AVG(Age) AS avg_age FROM employees;
 
-select dept, avg(age) from employees group by dept;
+-- Average age per department
+SELECT Dept, ROUND(AVG(Age), 1) AS average_age
+FROM employees
+GROUP BY Dept;
 
-select dept, round(avg(age), 1) as average_age from employees 
-group by dept;
+-- Total salary per department
+SELECT Dept, SUM(Salary) AS total_salary
+FROM employees
+GROUP BY Dept;
 
-select dept, sum(salary) from employees
-group by dept;
+-- Employee count per city
+SELECT COUNT(Emp_Id) AS emp_count, City
+FROM employees
+GROUP BY City
+ORDER BY emp_count DESC;
 
-select count(emp_id), city from employees
-group by city
-order by count(emp_id) desc;
+-- Employees joined per year
+SELECT YEAR(Doj) AS join_year, COUNT(Emp_Id) AS num_employees
+FROM employees
+GROUP BY join_year;
 
-select year(doj) as year, count(emp_id)
-from employees
-group by year(doj);
+-- =========================
+-- Creating Sales Table
+-- =========================
 
-select dept, sum(salary) as total_salary from employees
-group by dept;
+-- Drop table if exists
+DROP TABLE IF EXISTS sales;
 
-create table sales (product_id int, sell_price float, quantity int, state varchar(20));
+-- Create sales table
+CREATE TABLE sales (
+    product_id INT,       -- Product ID
+    sell_price FLOAT,     -- Selling price per unit
+    quantity INT,         -- Quantity sold
+    state VARCHAR(20)     -- Region/State
+);
 
-insert into sales values 
+-- Insert sample sales data
+INSERT INTO sales VALUES
 (121, 320.0, 3, 'California'),
 (122, 450.0, 1, 'New York'),
 (123, 150.0, 5, 'Texas'),
@@ -74,46 +122,72 @@ insert into sales values
 (134, 200.0, 11, 'Washington'),
 (135, 720.0, 12, 'Nevada');
 
-select * from sales;
+-- Display all sales
+SELECT * FROM sales;
 
-select product_id, sum(sell_price *	quantity) as revenue
-from sales group by product_id;
+-- Revenue per product
+SELECT product_id, SUM(sell_price * quantity) AS revenue
+FROM sales
+GROUP BY product_id;
 
-create table c_product (product_id int, cost_price float);
+-- =========================
+-- Joining Tables and Profit Calculation
+-- =========================
 
-insert into c_product
-values(121, 270.0),
+-- Create cost price table
+DROP TABLE IF EXISTS c_product;
+CREATE TABLE c_product (
+    product_id INT,
+    cost_price FLOAT
+);
+
+-- Insert sample cost data
+INSERT INTO c_product VALUES
+(121, 270.0),
 (123, 250.0);
 
-select c.product_id, sum((s.sell_price - c.cost_price) * s.quantity) as profit
-from sales as s inner join c_product as c
-where s.product_id = c.product_id
-group by c.product_id;	
+-- Calculate profit per product
+SELECT c.product_id, SUM((s.sell_price - c.cost_price) * s.quantity) AS profit
+FROM sales AS s
+INNER JOIN c_product AS c
+ON s.product_id = c.product_id
+GROUP BY c.product_id;
 
-select * from employees;
+-- =========================
+-- Advanced Queries with HAVING
+-- =========================
 
-select dept, avg(salary) as avg_salary
-from employees
-group by dept
-having avg(salary) > 75000;	
+-- Average salary per department (filter > 75000)
+SELECT Dept, AVG(Salary) AS avg_salary
+FROM employees
+GROUP BY Dept
+HAVING AVG(Salary) > 75000;
 
-select city, sum(salary) as total
-from employees
-group by city
-having sum(salary) > 20000;
+-- Total salary per city (filter > 20000)
+SELECT City, SUM(Salary) AS total_salary
+FROM employees
+GROUP BY City
+HAVING SUM(Salary) > 20000;
 
-select dept, count(*) as emp_count
-from employees
-group by dept
-having count(*)>2;
+-- Employee count per department (filter > 2)
+SELECT Dept, COUNT(*) AS emp_count
+FROM employees
+GROUP BY Dept
+HAVING COUNT(*) > 2;
 
-select city, count(*) as emp_count
-from employees
-where city != "Houston"
-group by city 
-having count(*) > 2;
+-- Employee count per city excluding Houston (filter > 2)
+SELECT City, COUNT(*) AS emp_count
+FROM employees
+WHERE City != 'Houston'
+GROUP BY City
+HAVING COUNT(*) > 2;
 
-select dept, count(*) as emp_count
-from employees
-group by dept
-having avg(salary) > 75000;
+-- Employee count per department with average salary > 75000
+SELECT Dept, COUNT(*) AS emp_count
+FROM employees
+GROUP BY Dept
+HAVING AVG(Salary) > 75000;
+
+-- =========================================
+-- End of Lesson 3
+-- =========================================
